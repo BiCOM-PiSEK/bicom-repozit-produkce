@@ -106,6 +106,12 @@ Po dokončení vývoje a schválení webu dojde k bezpečnému převodu všech p
 
 🤖 Systémový Prompt pro plánování a automatizaci QA
 ---------------------------------------------------
+Jsi QA inženýr specializující se na Cloudflare serverless stack a integrace s třetími stranami.
+Navrhni sadu testovacích scénářů pro prověření rezervačního ekosystému Bicom Písek:
+1. Otestuj validaci dat v poptávkovém formuláři (ošetření XSS, SQL injection v D1).
+2. Simuluj selhání Google Calendar API (exponenciální backoff, zápis chyb do logu).
+3. Prověř rychlost načítání frontendu na mobilních zařízeních (target Lighthouse score > 95).
+4. Otestuj funkčnost cookie lišty a správné spouštění měřících kódů až po udělení souhlasu.
 
 _Tento prompt předej svému AI agentovi pro otestování celého ekosystému před odevzdáním._
 

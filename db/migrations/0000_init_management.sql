@@ -2,6 +2,7 @@
 -- Inicializace D1 tabulek pro "Secret Frontend" (Management vrstvu)
 
 -- Tabulka pro audit logy (akce agentů a administrátorů)
+-- Poznámka: v reálném nasazení z dokumentu 05 má actor formát např. `operator:{id}`
 CREATE TABLE IF NOT EXISTS admin_audit_logs (
     id TEXT PRIMARY KEY,
     actor TEXT NOT NULL,
@@ -11,6 +12,45 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
     details TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Tabulka pro operátory (dvě a více provozovatelek pro asynchronní zamykání a identity)
+CREATE TABLE IF NOT EXISTS operators (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT DEFAULT 'admin', -- 'owner', 'admin'
+    calendar_color TEXT,
+    email TEXT UNIQUE NOT NULL
+);
+
+-- Tabulka zámků kalendářních slotů k prevenci dvojí rezervace
+CREATE TABLE IF NOT EXISTS calendar_slots (
+    start_ts DATETIME UNIQUE NOT NULL,
+    end_ts DATETIME NOT NULL,
+    locked_by TEXT, -- reference na operators.id
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabulka příspěvků na sociální sítě pro 'social-publish'
+CREATE TABLE IF NOT EXISTS social_posts (
+    id TEXT PRIMARY KEY,
+    content_text TEXT,
+    media_url TEXT,
+    status TEXT DEFAULT 'draft',
+    publish_at DATETIME,
+    created_by TEXT, -- reference na operators.id
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabulka marketingových kampaní (agregace doporučení)
+CREATE TABLE IF NOT EXISTS marketing_campaigns (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    status TEXT DEFAULT 'planned',
+    target_geo TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 
 -- Tabulka pro správu dynamických obsahových bloků (aby klient mohl měnit texty z frontendu)
 CREATE TABLE IF NOT EXISTS content_blocks (

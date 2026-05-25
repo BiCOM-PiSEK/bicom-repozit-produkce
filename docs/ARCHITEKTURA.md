@@ -459,3 +459,177 @@ Každá veřejná URL/sekce má:
 - Cíl: TTFB < 50 ms, FCP < 200 ms, LCP < 500 ms, Lighthouse ≥ 95.
 - Obrázky: WebP/AVIF z R2, lazy-load, explicitní rozměry (žádný layout shift).
 - Kritické CSS inline, zbytek odložen; fonty `font-display: swap` + preload.
+
+
+# 05 · Administrační & orchestrační vrstva („prostřední uzel" / motor)
+
+> Nejdůležitější vrstva celého ekosystému. **Není** to monolitický admin panel (typu WordPress `wp-admin`). Je to **Decoupled, API-First, Event-Driven** orchestrační uzel na Cloudflare Edge Grid, který propojuje Google Workspace, řízení marketingu, sdílení obsahu na sociální sítě a řídí **směr toku informací mezi vnitřním (virtuálním) a vnějším (reálným) světem**. Navrženo pro **více provozovatelek** (aktuálně dvě majitelky) se správným řešením souběžnosti.
+
+## 1. Princip: provozovatelky jako „asynchronní trigger"
+Provozovatelky neotevírají složitý admin. Své běžné denní úkony (změna barvy v Google Kalendáři, příspěvek na Instagram, hlasová poznámka) = **události**, které spouští webhooky. Technologický motor je na pozadí zachytí, zpracuje, zašifruje a distribuuje na frontend. Žádné „logování do systému", žádné formuláře navíc.
+
+```
+VNĚJŠÍ REÁLNÝ SVĚT  ──události──▶  ORCHESTRAČNÍ UZEL (Edge)  ──▶  VNITŘNÍ VIRTUÁLNÍ SVĚT
+(majitelky, klienti,            (Workers + Queues + Cron +        (web, DB, média, profily)
+ kalendář, Instagram, hlas)      AI normalizace + šifrování)
+```
+
+## 2. Nová podmínka: DVĚ provozovatelky (multi-operator)
+Vrstva musí sjednotit dvě (obecně N) majitelky do jednoho konzistentního výstupu a ošetřit **souběžnost** jejich akcí.
+
+| Požadavek | Řešení |
+|-----------|--------|
+| Identita a role | Tabulka `operators` (id, jméno, role: `owner`/`admin`, barva v kalendáři, e-mail) |
+| Sdílený zdroj pravdy | D1 jako jediný SSoT; oba pracují nad stejnými daty |
+| Žádná dvojí rezervace | Zámek slotu (KV lock + D1 unique constraint na slot) — viz §7 |
+| Kdo co udělal | `audit_log.actor` = `operator:{id}` / `system` / `cron` |
+| Jednotný hlas navenek | AI normalizace (§5) — výstup stejný bez ohledu na to, která diktovala |
+| Sdílené kanály | Jeden „resource" Google Kalendář + jeden profesní Instagram, rozlišení barvou/štítkem operátorky |
+
+## 3. Architektura — 5 vrstev
+
+### A. API Gateway & logická vrstva (Cloudflare Workers)
+Mikro-služby ve V8 izolátech na Edge fungují jako **router a směrovač toku dat**.
+- Endpointy: `/api/book`, `/api/newsletter`, `/api/chat`, `/api/admin/*`, `/api/calendar-hook`, `/api/social/*`, `/api/health`.
+- Přijímá **multimodální vstupy**: HTTP POST z frontendu, webhooky z Google Kalendáře obou majitelek, data z Meta Graph API, hlasové přepisy.
+- **Bezestavová (stateless)**: CORS, rate limiting (KV), sanitizace, ověření `ADMIN_TOKEN` u admin tras.
+
+### B. Event-Driven asynchronní zpracování (Queues & Cron)
+Frontend odpovídá < 200 ms; těžké operace běží na pozadí.
+- **Queues** `booking-jobs`: endpoint jen zašifruje + zapíše + pošle zprávu; consumer odbaví Google Calendar (Service Account OAuth2) a Resend.
+- **Queue** `social-jobs` (nové): publikace/sdílení obsahu na sociální sítě dle plánu.
+- **Cron**: `instagram-sync` (24 h, sdílený IG → DB), `reminders-dispatch` (SMS GoSMS), `gdpr-anonymize`, `geo-insights`, `social-publish` (naplánované sdílení), `d1-backup`.
+
+### C. State management & storage (D1 & R2)
+- **D1** = sdílený SSoT pro obě majitelky: `bookings`, `blog_posts`, `services`, + `operators`, `calendar_slots`, `social_posts`, `marketing_campaigns`. Řeší **race conditions** (§7).
+- **R2** = média (zero egress): automaticky stažené fotky z Instagramu, streamovaná videa.
+
+### D. Kognitivní vrstva pro sjednocení výstupů (Workers AI) — nejzásadnější prvek
+Slouží jako **překladač a normalizátor** individuálních vstupů obou majitelek.
+- Binding `AI`, model `@cf/meta/llama-3-8b-instruct`.
+- `/api/admin/copywriter`: přijme hrubý hlasový přepis kterékoliv majitelky → aplikuje **tvrdý system prompt** (vyloučí zakázaná zdravotní tvrzení dle `03_GEO_AEO/03`, nasadí tón „Quiet Luxury") → výstup je **100% konzistentní** bez ohledu na autorku.
+- Pravidlo: AI **nepublikuje sama** — navrhuje, člověk (kterákoliv majitelka) schválí.
+
+### E. Security blueprint (šifrování & Secrets)
+Vrstva funguje jako **bezpečnostní proxy/filtr** (čl. 9 GDPR — zdraví, diagnózy).
+- **Field-Level Encryption**: payload s popisem potíží Worker zašifruje (Web Crypto API, AES-GCM 256) ještě před zápisem do D1 → v DB je nečitelný.
+- **Cloudflare Secrets**: API klíče, OAuth certifikáty Google Workspace, Meta tokeny, `ENCRYPTION_KEY` — izolovaný trezor; GitHub k nim nemá přístup.
+
+## 4. „Admin surface" — jak provozovatelky reálně ovládají systém
+Bez složitého adminu. Primárně přes nástroje, které znají; minimální skrytý admin jen pro to, co jinak nejde.
+
+| Akce provozovatelky (vnější) | Trigger | Co systém udělá (vnitřní) |
+|------------------------------|---------|---------------------------|
+| Změní barvu události v Google Kalendáři (žlutá→zelená) | `calendar-hook` webhook | potvrdí rezervaci, pošle e-mail + naplánuje SMS |
+| Přidá příspěvek na sdílený Instagram | `instagram-sync` (Cron) | stáhne fotku → R2, text → D1, článek na webu |
+| Namluví hlasovou poznámku → vloží do admin SPA | `POST /api/admin/copywriter` | AI vytvoří článek v jednotném tónu, čeká na schválení |
+| Klikne „Zveřejnit" / „Sdílet" v admin SPA | `POST /api/admin/publish` | publikuje na web, volitelně zařadí do `social-jobs` |
+| Nastaví/odloží kampaň | `POST /api/admin/campaign` | zapíše `marketing_campaigns`, naplánuje `social-publish` |
+
+**Minimální skrytý admin SPA** (`/admin`, token-gated, ne veřejné): schvalování AI článků, přehled rezervací (dešifrovaně, jen pro přihlášenou majitelku), naplánování sdílení, přepínač kampaní, „AI doporučení" z `geo-insights`. Žádná správa kódu, žádná infrastruktura — to dělá agent/orchestrátor.
+
+## 5. Mapa toků informací a „energie" (vstup ↔ výstup, vnitřní ↔ vnější)
+```mermaid
+graph LR
+  classDef ext fill:#EAEFE9,stroke:#738A75,color:#2B2B2B;
+  classDef core fill:#3A4A3C,stroke:#3A4A3C,color:#E3CFA8;
+  classDef out fill:#FAE5C7,stroke:#C5A880,color:#5C4A2A;
+
+  subgraph VNEJSI["Vnější reálný svět (vstupy)"]
+    K1["Klient: formulář"]:::ext
+    K2["Klient: chat dotaz"]:::ext
+    O1["Majitelka A: kalendář / hlas / IG"]:::ext
+    O2["Majitelka B: kalendář / hlas / IG"]:::ext
+  end
+  subgraph UZEL["Orchestrační uzel (Edge motor)"]
+    GW["API Gateway (Workers)"]:::core
+    EV["Event Bus (Queues+Cron)"]:::core
+    AI["AI normalizace (Llama 3)"]:::core
+    SEC["Šifrování + Secrets"]:::core
+    DB["D1 (SSoT)"]:::core
+    R2["R2 média"]:::core
+  end
+  subgraph VYSTUP["Vnitřní virtuální svět + zpět ven (výstupy)"]
+    W["Web / Magazín"]:::out
+    M["E-maily (Resend)"]:::out
+    S["SMS (GoSMS)"]:::out
+    C["Google Kalendář"]:::out
+    SOC["Sociální sítě (publish)"]:::out
+  end
+
+  K1 --> GW; K2 --> GW; O1 --> GW; O2 --> GW
+  GW --> SEC --> DB
+  GW --> EV
+  GW --> AI --> DB
+  EV --> C; EV --> M; EV --> S; EV --> SOC
+  DB --> W; R2 --> W
+```
+
+## 6. Orchestrace marketingu (pull strategie, procesně)
+- **Obsah → kanály:** `social-publish` (Cron/Queue) bere schválené `blog_posts`/`social_posts` a naplánovaně je sdílí (UTM značky → `geo_leads.source`).
+- **Data → rozhodnutí:** `geo-insights` agreguje poptávky podle PSČ/města a navrhne v admin SPA lokální kampaň („nárůst z Vodňan → kampaň odvykání kouření").
+- **Měření:** referraly z AI/vyhledávačů a kampaní se zapisují do `geo_leads` (source: organic/ads/ai_referral/maps/social).
+- Soulad s tvou pull strategií: nevnucujeme se, staneme se nejlepší odpovědí v momentě potřeby.
+
+## 7. Souběžnost dvou majitelek (concurrency — detail)
+- **Sdílený „resource" kalendář** + per-majitelka barva/štítek (z `operators`).
+- **Prevence dvojí rezervace:** D1 `UNIQUE` na slot (`calendar_slots(start_ts)`), KV `lock:slot:{ts}` při zápisu (TTL pár sekund), stav `pending→confirmed`; `calendar-hook` reconciliace proti Google Kalendáři.
+- **Idempotence webhooků:** dedup podle `event_id` (KV/`audit_log`) — opakovaný webhook se zahodí.
+- **Atomicita:** D1 transakce/`batch` pro konzistentní zápis; optimistické zamykání (`updated_at`/verze) u editace stejného záznamu.
+- **Audit:** každý zápis nese `actor = operator:{id}` → kdo co kdy, bez složitého logování pro majitelky.
+
+## 8. Klíčové procesy (krok za krokem)
+**P1 — Rezervace při dvou majitelkách:** poptávka → slot lock → zápis (pending) → obě vidí žlutou událost → první potvrdí (zelená) → lock zabrání druhé potvrdit duplicitně → systém pošle potvrzení + SMS. Kolize = druhá dostane info „již potvrzeno kolegyní".
+**P2 — Obsah:** kterákoliv namluví poznámku → AI normalizace (jednotný tón + právní filtr) → návrh → kterákoliv schválí → web + volitelně sociální sítě.
+**P3 — Marketingová kampaň:** `geo-insights` návrh → majitelka potvrdí v admin SPA → `social-publish` naplánuje sdílení → měření přes UTM.
+**P4 — Onboarding další majitelky:** přidat řádek do `operators` (role, barva, e-mail), sdílet kalendář se Service Accountem, propojit IG — žádný zásah do kódu.
+
+## 9. Nové komponenty (čeho se to dotkne v repu/infře)
+- **D1 tabulky (nové):** `operators`, `calendar_slots`, `social_posts`, `marketing_campaigns` (+ migrace).
+- **Workers:** `functions/admin/*` (auth, copywriter, approve/publish, dashboard-data, campaign), `functions/api/social-publish.js` (Cron/Queue consumer), rozšířený `calendar-hook` (reconcile + multi-operator).
+- **Queue:** `social-jobs`. **KV klíče:** `lock:slot:{ts}`, `evt:{id}` (idempotence).
+- **Frontend:** skrytá admin SPA `/admin` (token-gated) — schvalování, přehled, plánování.
+- **Endpointy (přidat do `08_TECH_TOOLSET/04`):** `/api/admin/login`, `/api/admin/copywriter`, `/api/admin/approve`, `/api/admin/publish`, `/api/admin/dashboard`, `/api/admin/campaign`, `/api/social/publish`.
+
+## 10. Definition of Done pro tuto vrstvu
+- [ ] `operators` + role + barvy; obě majitelky fungují souběžně bez kolizí.
+- [ ] Prevence dvojí rezervace ověřena testem (2 souběžné potvrzení → jen 1 projde).
+- [ ] Idempotence webhooků (opakovaný `calendar-hook` nezdvojí akci).
+- [ ] AI normalizace dává jednotný výstup z různých vstupů (test 2 autorky → stejný tón, právní filtr drží).
+- [ ] Citlivá data šifrovaná před D1; admin trasy za `ADMIN_TOKEN`.
+- [ ] Admin SPA: schválení článku, přehled rezervací, plán sdílení, AI doporučení.
+- [ ] `social-publish` + UTM měření do `geo_leads`.
+- [ ] Audit_log s `actor` u všech zápisů.
+
+
+# 06 · Zástupné definice pro budoucí specifikaci (Gap Analysis)
+
+> Tato sekce obsahuje upřesněná architektonická rozhodnutí na základě diskuse s uživatelem.
+
+## 6.1 Autentizační mechanismus pro administraci
+*   **Doporučené a zvolené řešení:** **Cloudflare Access (Zero Trust)**.
+*   **Důvod:** Jelikož administrátorky budou maximálně 2–3 (Lenka + případná další operátorka), Firebase Auth je zbytečně komplexní na integraci v kódu. Cloudflare Access filtruje provoz přímo na DNS/Edge úrovni (než se vůbec spustí Worker).
+*   **Implementace:**
+    *   V CF Dashboardu se zapne Cloudflare Access pro subdoménu / cestu `/admin`.
+    *   Nakonfiguruje se Google OAuth (přihlášení přes Google účet) s bílou listinou (whitelist) povolených 2–3 konkrétních e-mailů.
+    *   Vynutí se dvoufázové ověření (2FA) přímo v rozhraní Cloudflare Access.
+    *   Worker v `/api/admin/*` pouze ověřuje přítomnost JWT tokenu z hlavičky `Cf-Access-Jwt-Assertion` (volitelně pro extra bezpečnost).
+
+## 6.2 Konvence pro MCP (Model Context Protocol)
+*   **Cíl:** Umožnit lokálním vývojovým AI agentům bezpečnou správu D1, R2 a čtení stavů přímo z vývojového prostředí (např. v IDE).
+*   **Navržená architektura:** **Cloudflare Workers MCP Gateway**.
+    *   Vytvoří se speciální zabezpečený endpoint `/api/mcp` (např. chráněný Cloudflare Access service tokenem nebo silným tajným klíčem `MCP_GATEWAY_TOKEN`).
+    *   Tento endpoint bude implementovat specifikaci MCP a překládat JSON-RPC volání na příkazy pro D1 (`run_sql`), R2 (`list_bucket`, `get_object`) a KV.
+    *   Výhoda: Agent nepotřebuje složité SSH tunely, komunikuje standardně přes HTTPS a veškerá oprávnění jsou kontrolována přímo v kódu Workeru na základě tokenu.
+
+## 6.3 AI Guardrails & Fallbacks (Rotace a zálohy modelů)
+*   **Lokace systémového promptu:** Prompty (pro copywritera i chatbota) budou uloženy v KV / D1 (v tabulce `content_blocks`), nikoliv natvrdo v kódu Workeru. To umožní jejich okamžitou editaci přes administraci bez nutnosti redeploye.
+*   **Zálohovací řetězec (Fallback chain):**
+    1.  **Primární:** Cloudflare Workers AI (`@cf/meta/llama-3-8b-instruct`) — nulové dodatečné náklady, edge inference.
+    2.  **Sekundární (rychlost/kapacita):** Groq API (Llama 3 70B/8B) přes binding `GROQ_API_KEY`.
+    3.  **Terciární (kreativita/komplexnost):** Google Gemini API / GitHub Models (Gemma 2 / Gemini 1.5 Pro) přes API klíč.
+*   **Implementace ve Workeru:** Pokud volání primárního modelu selže (HTTP 5xx / timeout), kód automaticky přepne na sekundární/terciární API s identickým systémovým promptem.
+
+## 6.4 Konvence testování (Unit / E2E)
+*   **Stav:** Rozhodnutí o testovacím stacku (Vitest vs Jest vs playwright) odloženo na pozdější fázi projektu.
+*   **Úkol pro agenta:** Připomenout uživateli před přechodem k fázi ostrého nasazování API a automatických testů.

@@ -14,7 +14,20 @@
 
 ---
 
-## Záznam o přípravě repozitáře
+## Záznam o Fázi 2 (Management Vrstva a Style Brief)
+- **Datum:** 2026-05-25 22:41
+- **Agent:** Gemini/Antigravity
+- **Úkol:** Integrace Style Briefu jako ultimátní pravdy a vytvoření kostry pro management vrstvu
+- **Změny:** 
+  - Ze souboru `.docx` vytažen text a založen `docs/STYLE_BRIEF.md`.
+  - Vytvořen `.github/AI_AGENT_PROMPT.md` definující *Upstream Workflow* a vynucující *Quiet Luxury*.
+  - Aktualizován `README.md` pro odkaz na Workflow.
+  - Založena kostra pro "Secret frontend": `public/admin/index.html`.
+  - Přidány DB migrace `db/migrations/0000_init_management.sql` s tabulkami pro logy, obsahy a stavy.
+  - Vložen konfigurák pro Google Workspace do `.dev.vars.example`.
+- **Rozhodnutí/odchylky:** Ačkoliv se má vše tvořit ve vývojovém balíku, tato základní kostra v repozitáři usnadní život dalším vývojářům a agentům při práci na API a admin částech, protože vymezí jasné hranice mezi public webem a management aplikací.
+- **QA:** N/A (pouze init souborů)
+- **Pro orchestrátora:** Nyní je repozitář prokazatelně připraven k systematickému vývoji. Další kroky by měly směřovat na napojení Cloudflare D1 databáze a propojení admin frontendu s `functions/admin/`.## Záznam o přípravě repozitáře
 - **Datum:** 2026-05-25 20:22
 - **Agent:** Gemini/Antigravity
 - **Úkol:** Příprava repozitáře, naklonování scaffold struktury, přesun a konsolidace dokumentace z vývojového balíku

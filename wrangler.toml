@@ -26,9 +26,18 @@ binding = "AI"
 [[queues.producers]]
 binding = "BOOKING_QUEUE"
 queue = "booking-jobs"
+
+[[queues.producers]]
+binding = "SOCIAL_QUEUE"
+queue = "social-jobs"
+
 [[queues.consumers]]
 queue = "booking-jobs"
 max_batch_size = 10
+
+[[queues.consumers]]
+queue = "social-jobs"
+max_batch_size = 5
 
 # --- Cron Triggers ---
 [triggers]
@@ -37,7 +46,8 @@ crons = [
   "0 3 * * *",     # instagram-sync
   "30 3 * * *",    # gdpr-anonymize
   "0 4 * * 1",     # geo-insights
-  "0 2 * * 0"      # d1-backup
+  "0 2 * * 0",     # d1-backup
+  "0 8 * * *",     # social-publish (naplánované sdílení, např. ráno)
 ]
 
 # Secrets se NIKDY nepíší sem. Nastav je: `wrangler secret put NAZEV`

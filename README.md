@@ -22,12 +22,15 @@ npm run dev
 ```
 
 ## 🤖 Protokol pro AI agenty
-1. Přečti `MEVERIK_vyvojovy_balik/04_AGENTI/System_prompt_GLOBAL.md` + svůj brief.
-2. Drž design „Quiet Luxury" (Cormorant Garamond + Montserrat; šalvějová/smetanová/champagne).
+1. **Přečti `.github/AI_AGENT_PROMPT.md`** a plně ho respektuj.
+2. Design se řídí PŘÍSNĚ podle `docs/STYLE_BRIEF.md` (Quiet Luxury). Žádné odchylky v barvách či typografii nejsou povoleny.
 3. **Žádné** externí knihovny mimo definované ve `wrangler.toml`/`package.json`.
 4. Každou změnu zapiš do `agent_journal.md`.
 5. Zdravotní tvrzení **vždy** přes právní filtr (`03_GEO_AEO/03`).
 6. Žádný Secret do kódu — pouze CF Secrets / `.dev.vars`.
 
 ## 📦 Předání
-Postup převodu domény, CF účtu, Google Workspace, repozitáře → `MEVERIK_vyvojovy_balik/05_HANDOVER/`.
+Postup převodu domény, CF účtu, Google Workspace, repozitáře → `docs/HANDOVER.md`.
+
+## 🔄 Upstream Workflow (Nadřazenost vývojového balíku)
+Tento repozitář představuje implementační a produkční vrstvu. **Nadřazeným strategickým a designovým zdrojem** je lokální adresář `MEVERIK_vyvojovy_balik`. Jakákoliv strategická či vizuální změna musí být nejprve vytvořena a schválena tam. Sem se pouze promítá (kóduje). Nepřetvářejte strategii přímo v tomto repozitáři.

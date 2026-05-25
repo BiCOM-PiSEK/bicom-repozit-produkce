@@ -9,3 +9,8 @@ META_IG_USER_ID="1784xxxxxxxx"
 SMS_GATEWAY_API_KEY="xxxxxxxx"
 ENCRYPTION_KEY="64znakovy_hex_klic_256bit"
 ADMIN_TOKEN="dlouhy_nahodny_token_pro_admin_endpointy"
+
+# --- Google Workspace a Mapy (Management) ---
+GOOGLE_WORKSPACE_ADMIN_EMAIL="admin@bicompisek.cz"
+GOOGLE_MAPS_API_KEY="AIza_xxxxxxxxxxxxxxxxxxxxxx"
+GOOGLE_PLACES_ID="ChIJ_xxxxxxxxxxxxxxxxxxxxxx"

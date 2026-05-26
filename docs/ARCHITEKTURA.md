@@ -304,18 +304,29 @@ Pro úlohy, které nesmí blokovat odpověď klientovi (např. odeslání e-mail
 ```
 Výhoda: klient dostane okamžité „děkujeme" (< 200 ms), těžká integrace běží na pozadí s retry.
 
-## 4. Integrace (konektory) a jejich Secrets
+## 4. Integrace (konektory), Secrets a názvosloví
+
+Pro přehlednost a bezpečnost používáme v ekosystému striktní pravidla pro pojmenování a ukládání konfiguračních proměnných a klíčů:
+
+1. **NEXT_PUBLIC_ (Veřejné klientské proměnné)**:
+   * **Umístění**: Cloudflare Pages Environment Variables (Build-time) a klientský kód.
+   * **Charakteristika**: Tyto klíče jsou viditelné v prohlížeči. Nikdy nesmí obsahovat citlivá hesla.
+   * **Příklady**: `NEXT_PUBLIC_MAPY_CZ_API_KEY`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
+2. **SECRET_ (Soukromé backendové klíče)**:
+   * **Umístění**: Cloudflare Workers Secrets (šifrovaný trezor na Edge). Nastavují se příkazem `wrangler secret put NAZEV` nebo v CF Dashboardu. Pro lokální vývoj se ukládají do souboru `.dev.vars` (který je v `.gitignore`).
+   * **Charakteristika**: Nikdy nejsou vidět v prohlížeči ani v repozitáři na GitHubu.
+   * **Příklady**: `SECRET_RESEND_API_KEY`, `SECRET_ENCRYPTION_KEY`.
 
 | Konektor | Účel | Secret | Auth |
 |----------|------|--------|------|
-| Google Calendar API | zápis/čtení termínů | `GOOGLE_CALENDAR_CLIENT_EMAIL`, `GOOGLE_CALENDAR_PRIVATE_KEY` | Service Account (OAuth2) |
-| Gmail / Resend | transakční e-maily | `RESEND_API_KEY` | API key |
-| Meta Graph API | sync Instagramu | `META_GRAPH_ACCESS_TOKEN` | Long-lived token |
-| SMS brána | upomínky 24h | `SMS_GATEWAY_API_KEY` | API key (GoSMS / sms.sluzba.cz) |
-| (šifrování) | field-level | `ENCRYPTION_KEY` | generovaný hash |
-| Stripe (volitelné) | online platby záloh | `STRIPE_SECRET_KEY` | API key |
+| Google Calendar API | zápis/čtení termínů | `SECRET_GOOGLE_CALENDAR_CLIENT_EMAIL`, `SECRET_GOOGLE_CALENDAR_PRIVATE_KEY` | Service Account (OAuth2) |
+| Gmail / Resend | transakční e-maily | `SECRET_RESEND_API_KEY` | API key |
+| Meta Graph API | sync Instagramu | `SECRET_META_GRAPH_ACCESS_TOKEN` | Long-lived token |
+| SMS brána | upomínky 24h | `SECRET_SMS_GATEWAY_API_KEY` | API key (GoSMS / sms.sluzba.cz) |
+| (šifrování) | field-level | `SECRET_ENCRYPTION_KEY` | generovaný hash |
+| Stripe (volitelné) | online platby záloh | `SECRET_STRIPE_SECRET_KEY` | API key |
 
-> Detailní postup zřízení každého účtu + jak získat klíč: `05_HANDOVER/02_Co_zajistit_API_ucty_klice.md`.
+> Detailní postup zřízení každého účtu + jak získat klíč: `docs/HANDOVER.md`.
 
 ## 5. MAPY a lokální vrstva (kritické pro GEO)
 
@@ -626,8 +637,8 @@ graph LR
 *   **Lokace systémového promptu:** Prompty (pro copywritera i chatbota) budou uloženy v KV / D1 (v tabulce `content_blocks`), nikoliv natvrdo v kódu Workeru. To umožní jejich okamžitou editaci přes administraci bez nutnosti redeploye.
 *   **Zálohovací řetězec (Fallback chain):**
     1.  **Primární:** Cloudflare Workers AI (`@cf/meta/llama-3-8b-instruct`) — nulové dodatečné náklady, edge inference.
-    2.  **Sekundární (rychlost/kapacita):** Groq API (Llama 3 70B/8B) přes binding `GROQ_API_KEY`.
-    3.  **Terciární (kreativita/komplexnost):** Google Gemini API / GitHub Models (Gemma 2 / Gemini 1.5 Pro) přes API klíč.
+    2.  **Sekundární (rychlost/kapacita):** Groq API (Llama 3 70B/8B) přes binding `SECRET_GROQ_API_KEY`.
+    3.  **Terciární (kreativita/komplexnost):** Google Gemini API / GitHub Models (Gemma 2 / Gemini 1.5 Pro) přes API klíč `SECRET_GEMINI_API_KEY`.
 *   **Implementace ve Workeru:** Pokud volání primárního modelu selže (HTTP 5xx / timeout), kód automaticky přepne na sekundární/terciární API s identickým systémovým promptem.
 
 ## 6.4 Konvence testování (Unit / E2E)

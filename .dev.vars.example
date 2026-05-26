@@ -1,16 +1,26 @@
 # Zkopíruj na .dev.vars a vyplň. .dev.vars je v .gitignore — NIKDY necommitovat na GitHub.
 # Na produkci nastav přes:  wrangler secret put NAZEV
-GOOGLE_CALENDAR_CLIENT_EMAIL="service-account@bicom-pisek.iam.gserviceaccount.com"
-GOOGLE_CALENDAR_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_CALENDAR_ID="primary"
-RESEND_API_KEY="re_xxxxxxxx"
-META_GRAPH_ACCESS_TOKEN="EAAxxxxxxxx"
-META_IG_USER_ID="1784xxxxxxxx"
-SMS_GATEWAY_API_KEY="xxxxxxxx"
-ENCRYPTION_KEY="64znakovy_hex_klic_256bit"
-ADMIN_TOKEN="dlouhy_nahodny_token_pro_admin_endpointy"
 
-# --- Google Workspace a Mapy (Management) ---
-GOOGLE_WORKSPACE_ADMIN_EMAIL="admin@bicompisek.cz"
-GOOGLE_MAPS_API_KEY="AIza_xxxxxxxxxxxxxxxxxxxxxx"
-GOOGLE_PLACES_ID="ChIJ_xxxxxxxxxxxxxxxxxxxxxx"
+# --- Backend Secrets (přístupné pouze ve Workers, prefix SECRET_) ---
+SECRET_GOOGLE_CALENDAR_CLIENT_EMAIL="service-account@bicom-pisek.iam.gserviceaccount.com"
+SECRET_GOOGLE_CALENDAR_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+SECRET_GOOGLE_CALENDAR_ID="primary"
+SECRET_RESEND_API_KEY="re_xxxxxxxx"
+SECRET_META_GRAPH_ACCESS_TOKEN="EAAxxxxxxxx"
+SECRET_META_IG_USER_ID="1784xxxxxxxx"
+SECRET_SMS_GATEWAY_API_KEY="xxxxxxxx"
+SECRET_ENCRYPTION_KEY="64znakovy_hex_klic_256bit"
+SECRET_ADMIN_TOKEN="dlouhy_nahodny_token_pro_admin_endpointy"
+SECRET_GOOGLE_WORKSPACE_ADMIN_EMAIL="admin@bicompisek.cz"
+SECRET_GROQ_API_KEY="gsk_xxxxxxxx"
+SECRET_GEMINI_API_KEY="AIzaSyxxxxxxxx"
+SECRET_IDOKLAD_CLIENT_ID="idoklad_client_id_xxxxxxxx"
+SECRET_IDOKLAD_CLIENT_SECRET="idoklad_client_secret_xxxxxxxx"
+SECRET_TELEGRAM_BOT_TOKEN="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+SECRET_TELEGRAM_CHAT_ID="-100xxxxxxxxxx"
+
+# --- Public Client Variables (přístupné na frontendu, prefix NEXT_PUBLIC_) ---
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="AIza_xxxxxxxxxxxxxxxxxxxxxx"
+NEXT_PUBLIC_GOOGLE_PLACES_ID="ChIJ_xxxxxxxxxxxxxxxxxxxxxx"
+NEXT_PUBLIC_MAPY_CZ_API_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+NEXT_PUBLIC_GA_MEASUREMENT_ID="G-XXXXXXXXXX"

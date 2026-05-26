@@ -58,16 +58,18 @@
 ## 3. Secrets (nastavit přes `wrangler secret put NAZEV`)
 | Secret | Kde získat | Pozn. |
 |--------|-----------|-------|
-| `ENCRYPTION_KEY` | vygenerovat 256bit hex (`openssl rand -hex 32`) | uschovat bezpečně! ztráta = nečitelná data |
-| `ADMIN_TOKEN` | vygenerovat dlouhý náhodný řetězec | přístup k admin endpointům |
-| `GOOGLE_CALENDAR_CLIENT_EMAIL` | Google Cloud Console → Service Account | + sdílet kalendář Lenky s tímto účtem |
-| `GOOGLE_CALENDAR_PRIVATE_KEY` | tamtéž (JSON klíč) | |
-| `GOOGLE_CALENDAR_ID` | ID kalendáře Lenky | obvykle její e-mail |
-| `RESEND_API_KEY` | resend.com | ověřit doménu pro odesílání (SPF/DKIM) |
-| `META_GRAPH_ACCESS_TOKEN` | developers.facebook.com | long-lived token, propojit IG business účet |
-| `META_IG_USER_ID` | Graph API | |
-| `SMS_GATEWAY_API_KEY` | GoSMS.cz / sms.sluzba.cz | dobít kredit |
-| `STRIPE_SECRET_KEY` (volitelné) | stripe.com | jen pokud online platby záloh |
+| `SECRET_ENCRYPTION_KEY` | vygenerovat 256bit hex (`openssl rand -hex 32`) | uschovat bezpečně! ztráta = nečitelná data |
+| `SECRET_ADMIN_TOKEN` | vygenerovat dlouhý náhodný řetězec | přístup k admin endpointům |
+| `SECRET_GOOGLE_CALENDAR_CLIENT_EMAIL` | Google Cloud Console → Service Account | + sdílet kalendář Lenky s tímto účtem |
+| `SECRET_GOOGLE_CALENDAR_PRIVATE_KEY` | tamtéž (JSON klíč) | |
+| `SECRET_GOOGLE_CALENDAR_ID` | ID kalendáře Lenky | obvykle její e-mail |
+| `SECRET_RESEND_API_KEY` | resend.com | ověřit doménu pro odesílání (SPF/DKIM) |
+| `SECRET_META_GRAPH_ACCESS_TOKEN` | developers.facebook.com | long-lived token, propojit IG business účet |
+| `SECRET_META_IG_USER_ID` | Graph API | |
+| `SECRET_SMS_GATEWAY_API_KEY` | GoSMS.cz / sms.sluzba.cz | dobít kredit |
+| `SECRET_STRIPE_SECRET_KEY` (volitelné) | stripe.com | jen pokud online platby záloh |
+| `SECRET_GROQ_API_KEY` | groq.com | API pro záložní kognitivní Llama model |
+| `SECRET_GEMINI_API_KEY` | Google AI Studio | API pro záložní kognitivní Gemini model |
 
 ## 4. Google Workspace (doporučeno, volitelné ~8 €/měs)
 - [ ] Workspace na `bicompisek.cz` (Business tarif).
@@ -162,13 +164,15 @@
 ### B3 · API klíče a Secrets (jen evidence umístění!)
 | Secret (název v CF) | Účel | Poskytovatel | Kde se mění |
 |---------------------|------|--------------|-------------|
-| ENCRYPTION_KEY | šifrování dat | vlastní hash | CF Secrets (⚠ ztráta = nečitelná data) |
-| ADMIN_TOKEN | admin endpointy | vlastní | CF Secrets |
-| GOOGLE_CALENDAR_CLIENT_EMAIL / _PRIVATE_KEY | kalendář | Google Cloud | CF Secrets |
-| RESEND_API_KEY | e-maily | Resend | CF Secrets |
-| META_GRAPH_ACCESS_TOKEN | Instagram sync | Meta | CF Secrets |
-| SMS_GATEWAY_API_KEY | SMS | GoSMS | CF Secrets |
-| STRIPE_SECRET_KEY (volit.) | platby | Stripe | CF Secrets |
+| SECRET_ENCRYPTION_KEY | šifrování dat | vlastní hash | CF Secrets (⚠ ztráta = nečitelná data) |
+| SECRET_ADMIN_TOKEN | admin endpointy | vlastní | CF Secrets |
+| SECRET_GOOGLE_CALENDAR_CLIENT_EMAIL / _PRIVATE_KEY | kalendář | Google Cloud | CF Secrets |
+| SECRET_RESEND_API_KEY | e-maily | Resend | CF Secrets |
+| SECRET_META_GRAPH_ACCESS_TOKEN | Instagram sync | Meta | CF Secrets |
+| SECRET_SMS_GATEWAY_API_KEY | SMS | GoSMS | CF Secrets |
+| SECRET_STRIPE_SECRET_KEY (volit.) | platby | Stripe | CF Secrets |
+| SECRET_GROQ_API_KEY | záložní LLM | Groq | CF Secrets |
+| SECRET_GEMINI_API_KEY | záložní LLM | Google AI | CF Secrets |
 
 ### B4 · Sociální a lokální profily (NAP)
 | Profil | URL/ID | Owner | Pozn. |

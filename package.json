@@ -10,7 +10,7 @@
     "db:init:prod": "wrangler d1 execute bicom-db-prod --remote --file=db/schema.sql",
     "db:migrate": "wrangler d1 migrations apply bicom-db-prod --remote",
     "seed": "node scripts/seed-services.js",
-    "build:sitemap": "node scripts/build-sitemap.js",
+    "build": "node scripts/build-sitemap.js",
     "deploy": "wrangler pages deploy public",
     "lint": "eslint functions public/assets/js",
     "test": "vitest run"

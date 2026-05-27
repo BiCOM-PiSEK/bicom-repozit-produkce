@@ -5,8 +5,8 @@ pages_build_output_dir = "public"
 # --- D1 databáze ---
 [[d1_databases]]
 binding = "DB"
-database_name = "bicom-db-prod"
-database_id = "REPLACE_WITH_D1_ID"   # vyplní orchestrátor po `wrangler d1 create`
+database_name = "bicom-pisek-db"
+database_id = "c04cb289-2ff4-45d7-9fa0-3243c34c3abe"
 
 # --- R2 úložiště médií ---
 [[r2_buckets]]

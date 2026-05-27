@@ -24,16 +24,16 @@ export default {
       case "30 3 * * *": // gdpr-anonymize (daily at 03:30)
         ctx.waitUntil(cronGdpr.scheduled(event, env, ctx));
         break;
-      case "0 4 * * 1": // geo-insights (weekly on Mondays at 04:00)
+      case "0 4 * * MON": // geo-insights (weekly on Mondays at 04:00)
         ctx.waitUntil(cronGeo.scheduled(event, env, ctx));
         break;
-      case "0 2 * * 0": // d1-backup (weekly on Sundays at 02:00)
+      case "0 2 * * SUN": // d1-backup (weekly on Sundays at 02:00)
         ctx.waitUntil(cronBackup.scheduled(event, env, ctx));
         break;
       case "0 8 * * *": // social-publish (daily at 08:00)
         ctx.waitUntil(cronSocial.scheduled(event, env, ctx));
         break;
-      case "0 9 * * 1": // cashflow-alerts (weekly on Mondays at 09:00)
+      case "0 9 * * MON": // cashflow-alerts (weekly on Mondays at 09:00)
         ctx.waitUntil(cronCashflow.scheduled(event, env, ctx));
         break;
       default:

@@ -31,8 +31,8 @@ crons = [
   "0 */1 * * *",   # reminders-dispatch (every hour)
   "0 3 * * *",     # instagram-sync (daily at 03:00)
   "30 3 * * *",    # gdpr-anonymize (daily at 03:30)
-  "0 4 * * 1",     # geo-insights (weekly on Mondays at 04:00)
-  "0 2 * * 0",     # d1-backup (weekly on Sundays at 02:00)
+  "0 4 * * MON",     # geo-insights (weekly on Mondays at 04:00)
+  "0 2 * * SUN",     # d1-backup (weekly on Sundays at 02:00)
   "0 8 * * *",     # social-publish (daily at 08:00)
-  "0 9 * * 1"      # cashflow-alerts (weekly on Mondays at 09:00)
+  "0 9 * * MON"      # cashflow-alerts (weekly on Mondays at 09:00)
 ]

@@ -182,7 +182,7 @@ export async function onRequestGet({ env, data }) {
     // ─── System health ───────────────────────────────────
     const system = {
       d1: 'ok', // we just queried it successfully
-      r2: env.R2_BUCKET ? 'ok' : 'standby',
+      r2: env.MEDIA ? 'ok' : 'standby',
       kv: env.CACHE ? 'ok' : 'standby',
       telegram: env.SECRET_TELEGRAM_BOT_TOKEN ? 'ok' : 'standby',
       calendar: env.SECRET_GOOGLE_CALENDAR_CLIENT_EMAIL ? 'ok' : 'standby',

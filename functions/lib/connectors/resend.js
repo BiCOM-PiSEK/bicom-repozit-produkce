@@ -22,7 +22,7 @@ export class ResendConnector {
   constructor(env) {
     this.apiKey = env.SECRET_RESEND_API_KEY || '';
     this.configured = Boolean(this.apiKey);
-    this.fromEmail = 'Bicom Písek <info@bicompisek.cz>';
+    this.fromEmail = 'Bicom Písek <info@bicom-pisek.cz>';
   }
 
   /**

@@ -22,7 +22,7 @@ export default {
           // Append UTM link if campaign URL exists
           let text = post.content_text;
           if (post.utm_source && post.utm_campaign) {
-            const utmUrl = `https://bicompisek.cz?utm_source=${post.utm_source}&utm_campaign=${post.utm_campaign}`;
+            const utmUrl = `https://bicom-pisek.cz?utm_source=${post.utm_source}&utm_campaign=${post.utm_campaign}`;
             text += `\n\n🔗 ${utmUrl}`;
           }
 

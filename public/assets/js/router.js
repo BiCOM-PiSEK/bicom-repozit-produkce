@@ -389,7 +389,7 @@ function renderGdprPage() {
         <p>Údaje z rezervačního formuláře jsou automaticky anonymizovány po 30 dnech od plánovaného termínu sezení. E-mail pro zasílání newsletteru uchováváme do doby odhlášení odběru.</p>
 
         <p><strong>5. Práva subjektu údajů</strong></p>
-        <p>Máte právo požadovat přístup k Vašim osobním údajům, jejich opravu, výmaz („právo být zapomenut“), omezení zpracování, a vznést námitku proti zpracování na e-mail: <strong>info@bicompisek.cz</strong>.</p>
+        <p>Máte právo požadovat přístup k Vašim osobním údajům, jejich opravu, výmaz („právo být zapomenut“), omezení zpracování, a vznést námitku proti zpracování na e-mail: <strong>info@bicom-pisek.cz</strong>.</p>
       </div>
     </div>
   `;

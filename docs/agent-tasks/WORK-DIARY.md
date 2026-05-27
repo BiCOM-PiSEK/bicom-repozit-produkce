@@ -225,9 +225,11 @@
 - **Aktualizace Master Schématu:** Upraven soubor `db/schema.sql` pro inicializaci čistých databází s kompletní sadou sloupců.
 - **Lokální testování:** Ověřena validita schématu `schema.sql` úspěšným provedením inicializace lokální databáze D1.
 - **Sloučení:** Vytvořen Pull Request #7, ověřena integrita a squash-sloučeno do větve `main`. Lokální větve a fork `origin` jsou plně aktualizovány.
+- **Symlink pro Wrangler:** Vytvořen symbolický odkaz `migrations` -> `db/migrations` v kořeni repozitáře, aby Wrangler mohl automaticky nalézt složku s migracemi při volání `wrangler d1 migrations` bez nutnosti nepovolené úpravy `wrangler.toml`.
 
 ### Soubory vytvořené
 - `db/migrations/0006_schema_fixes.sql`
+- `migrations` (symbolický odkaz na `db/migrations`)
 
 ### Soubory opravené
 - `db/schema.sql`

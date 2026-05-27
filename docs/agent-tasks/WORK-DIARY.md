@@ -209,3 +209,33 @@
 - [x] Veřejné blog API z D1 s KV cache
 - [x] llms.txt, robots.txt a generovaná sitemapa
 - [x] Commitnuté a sloučené na main
+
+---
+
+## 2026-05-27 Produkční Audit a Opravy Databáze
+**Model:** Antigravity (Gemini)
+**Branch:** agent/ag-w2-04-schema-fixes -> merged to main
+**Status:** ✅ Hotovo
+
+### Co bylo implementováno
+- **Produkční Audit a Mapování:** Proveden kompletní audit kódové základny (11 111 řádků kódu), zmapování aktivních a pasivních souborů (viz `production_audit.md`).
+- **Nová D1 migrace:** Vytvořen migrační soubor `db/migrations/0006_schema_fixes.sql` pro přidání chybějících sloupců do existujících databází.
+  - Přidány sloupce `active` (INTEGER) a `calendar_id` (TEXT) do tabulky `operators`.
+  - Přidány sloupce `calendar_event_id` (TEXT), `operator_id` (TEXT) a `updated_at` (TIMESTAMP) do tabulky `bookings` včetně cizího klíče.
+- **Aktualizace Master Schématu:** Upraven soubor `db/schema.sql` pro inicializaci čistých databází s kompletní sadou sloupců.
+- **Lokální testování:** Ověřena validita schématu `schema.sql` úspěšným provedením inicializace lokální databáze D1.
+- **Sloučení:** Vytvořen Pull Request #7, ověřena integrita a squash-sloučeno do větve `main`. Lokální větve a fork `origin` jsou plně aktualizovány.
+
+### Soubory vytvořené
+- `db/migrations/0006_schema_fixes.sql`
+
+### Soubory opravené
+- `db/schema.sql`
+
+### Akceptační kritéria — splněno?
+- [x] Pečlivé zmapování všech souborů v kódové základně a sepsání případných issues.
+- [x] Vytvoření migračního SQL souboru 0006_schema_fixes.sql.
+- [x] Úprava master schématu db/schema.sql.
+- [x] Lokální ověření funkčnosti SQL kódu na testovací databázi.
+- [x] Vytvoření PR, kontrola a squash merge na main.
+

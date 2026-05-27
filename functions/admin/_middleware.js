@@ -1,0 +1,209 @@
+/**
+ * ═══════════════════════════════════════════════════════════════
+ * BICOM PÍSEK — Admin Middleware (Cloudflare Access JWT)
+ * ═══════════════════════════════════════════════════════════════
+ * Ověřuje JWT token z Cloudflare Access na cestách /admin/*.
+ * Identifikuje operátorku z JWT e-mailu → operators tabulka.
+ * Poskytuje `ctx.data.operator` pro všechny admin handlery.
+ *
+ * V dev režimu (SECRET_CF_ACCESS_TEAM = undefined) povolí
+ * přístup bez ověření s demo operátorkou.
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+/**
+ * Middleware pro admin endpointy.
+ * Cloudflare Pages Functions middleware — export onRequest.
+ */
+export async function onRequest(context) {
+  const { request, env, next, data } = context;
+
+  // CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  // Skip auth for static assets (CSS, JS, images)
+  const url = new URL(request.url);
+  if (
+    url.pathname.match(/\.(css|js|png|jpg|svg|ico|woff2?)$/) ||
+    url.pathname === '/admin' ||
+    url.pathname === '/admin/' ||
+    url.pathname === '/admin/index.html'
+  ) {
+    return next();
+  }
+
+  // Dev mode — pokud CF Access team není nastaven, povolí přístup
+  const cfTeam = env.SECRET_CF_ACCESS_TEAM;
+  if (!cfTeam) {
+    data.operator = {
+      id: 'dev-operator',
+      email: 'dev@bicompisek.cz',
+      name: 'Dev Režim',
+      role: 'admin',
+      isDev: true,
+    };
+    console.info('[admin-auth] Dev mode — no CF Access team configured');
+    return next();
+  }
+
+  // Production mode — ověření JWT z Cloudflare Access
+  const jwtToken =
+    request.headers.get('Cf-Access-Jwt-Assertion') ||
+    getCookieValue(request.headers.get('Cookie'), 'CF_Authorization');
+
+  if (!jwtToken) {
+    return jsonError('Neoprávněný přístup — chybí autorizační token.', 401);
+  }
+
+  try {
+    // Ověření JWT
+    const payload = await verifyJWT(jwtToken, cfTeam, env.SECRET_CF_ACCESS_AUD);
+
+    if (!payload || !payload.email) {
+      return jsonError('Neplatný token — nelze identifikovat uživatele.', 403);
+    }
+
+    // Vyhledat operátorku v DB
+    const operator = await findOperator(env.DB, payload.email);
+
+    if (!operator) {
+      console.warn(`[admin-auth] Unknown operator: ${payload.email}`);
+      return jsonError('Přístup zamítnut — váš e-mail není registrován.', 403);
+    }
+
+    // Nastavit kontext pro handlery
+    data.operator = operator;
+    data.jwtPayload = payload;
+
+  } catch (err) {
+    console.error('[admin-auth] JWT verification failed:', err);
+    return jsonError('Chyba ověření — zkuste se přihlásit znovu.', 401);
+  }
+
+  // Pokračuj ke handleru
+  const response = await next();
+
+  // Přidej CORS headers
+  const newHeaders = new Headers(response.headers);
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => newHeaders.set(k, v));
+
+  return new Response(response.body, {
+    status: response.status,
+    headers: newHeaders,
+  });
+}
+
+// ─── JWT VERIFICATION ────────────────────────────────────────────
+
+/**
+ * Ověří Cloudflare Access JWT.
+ * @param {string} token   — JWT token
+ * @param {string} team    — CF Access team domain (e.g., 'bicompisek')
+ * @param {string} aud     — CF Access Application Audience (AUD) tag
+ * @returns {Promise<Object|null>} — JWT payload nebo null
+ */
+async function verifyJWT(token, team, aud) {
+  // Rozděl JWT
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  // Dekóduj payload (bez ověření podpisu — Cloudflare Access to dělá za nás
+  // na edge, my jen kontrolujeme iss, aud, exp)
+  const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+
+  // Kontrola issuer
+  const expectedIss = `https://${team}.cloudflareaccess.com`;
+  if (payload.iss !== expectedIss) {
+    console.warn(`[admin-auth] Invalid issuer: ${payload.iss} vs ${expectedIss}`);
+    return null;
+  }
+
+  // Kontrola audience
+  if (aud && payload.aud) {
+    const audArray = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+    if (!audArray.includes(aud)) {
+      console.warn('[admin-auth] Invalid audience');
+      return null;
+    }
+  }
+
+  // Kontrola expirace
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp && payload.exp < now) {
+    console.warn('[admin-auth] Token expired');
+    return null;
+  }
+
+  // Kontrola "not before"
+  if (payload.nbf && payload.nbf > now + 60) {
+    console.warn('[admin-auth] Token not yet valid');
+    return null;
+  }
+
+  return payload;
+}
+
+// ─── DB LOOKUP ─────────────────────────────────────────────────
+
+/**
+ * Vyhledá operátorku v tabulce operators dle e-mailu.
+ * @param {D1Database} db
+ * @param {string} email
+ * @returns {Promise<Object|null>}
+ */
+async function findOperator(db, email) {
+  if (!db) return null;
+
+  try {
+    const result = await db
+      .prepare('SELECT id, email, name, role FROM operators WHERE email = ? AND active = 1')
+      .bind(email)
+      .first();
+
+    return result || null;
+  } catch (err) {
+    console.error('[admin-auth] DB lookup failed:', err);
+    return null;
+  }
+}
+
+// ─── HELPERS ────────────────────────────────────────────────────
+
+/**
+ * Extrahuje hodnotu cookie.
+ * @param {string|null} cookieHeader
+ * @param {string} name
+ * @returns {string|null}
+ */
+function getCookieValue(cookieHeader, name) {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`(?:^|;)\\s*${name}=([^;]*)`));
+  return match ? match[1] : null;
+}
+
+/**
+ * JSON error response.
+ * @param {string} message
+ * @param {number} status
+ * @returns {Response}
+ */
+function jsonError(message, status) {
+  return new Response(
+    JSON.stringify({ ok: false, error: message }),
+    {
+      status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CORS_HEADERS,
+      },
+    }
+  );
+}

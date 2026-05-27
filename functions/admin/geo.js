@@ -1,0 +1,85 @@
+/**
+ * BICOM PÍSEK — GEO Analytics Admin API
+ * GET /admin/geo — statistiky dle regionu
+ */
+
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+
+const PSC_TO_CITY = {
+  '39701': 'Písek', '39703': 'Písek', '39704': 'Písek',
+  '38601': 'Strakonice', '38901': 'Vodňany',
+  '39811': 'Protivín', '39901': 'Milevsko',
+  '37001': 'České Budějovice', '37501': 'Týn nad Vltavou',
+  '38701': 'Volyně', '38801': 'Blatná',
+};
+
+export async function onRequestGet({ env, data }) {
+  if (!data.operator) return json({ ok: false, error: 'Neoprávněný přístup' }, 401);
+
+  try {
+    // Aggregate by city
+    const cityResult = await env.DB.prepare(
+      `SELECT city, COUNT(*) as count
+       FROM geo_leads
+       WHERE city IS NOT NULL
+       GROUP BY city
+       ORDER BY count DESC
+       LIMIT 15`
+    ).all();
+
+    // Fallback: aggregate by PSČ prefix
+    const pscResult = await env.DB.prepare(
+      `SELECT psc, COUNT(*) as count
+       FROM geo_leads
+       GROUP BY psc
+       ORDER BY count DESC
+       LIMIT 15`
+    ).all();
+
+    // Build unified city list
+    const cityMap = new Map();
+
+    for (const row of cityResult?.results || []) {
+      if (row.city) cityMap.set(row.city, (cityMap.get(row.city) || 0) + row.count);
+    }
+
+    for (const row of pscResult?.results || []) {
+      const city = PSC_TO_CITY[row.psc] || `PSČ ${row.psc}`;
+      if (!cityMap.has(city)) {
+        cityMap.set(city, row.count);
+      }
+    }
+
+    const cities = Array.from(cityMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Service popularity by region
+    const serviceResult = await env.DB.prepare(
+      `SELECT service, COUNT(*) as count
+       FROM geo_leads
+       GROUP BY service
+       ORDER BY count DESC
+       LIMIT 5`
+    ).all();
+
+    const topServices = (serviceResult?.results || []).map((r) => ({
+      service: r.service,
+      count: r.count,
+    }));
+
+    return json({
+      ok: true,
+      data: {
+        cities,
+        topServices,
+        totalLeads: cities.reduce((s, c) => s + c.count, 0),
+      },
+    });
+  } catch (err) {
+    console.error('[admin/geo] Error:', err);
+    return json({ ok: false, error: 'Chyba při načítání GEO dat.' }, 500);
+  }
+}

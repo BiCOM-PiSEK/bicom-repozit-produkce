@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bicom Písek — Management Vrstva</title>
+    <!-- Tailwind převezme styly z projektu -->
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <!-- Ochrana proti indexování -->
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body class="bg-sage-50 text-charcoal min-h-screen">
+    <!-- Zde bude Cloudflare Access nebo JWT Gate -->
+    <div id="auth-gate" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200 max-w-md w-full">
+            <h1 class="font-cormorant text-2xl mb-4 text-center text-forest">Management & Provoz</h1>
+            <p class="font-montserrat text-sm text-center mb-6">Autorizační brána. Zde začíná kontrola ekosystému Bicom Písek.</p>
+            
+            <div class="space-y-4 font-montserrat text-sm">
+                <button class="w-full bg-forest text-white py-2 px-4 rounded hover:bg-forest/90 transition-colors">
+                    Přihlásit přes Google Workspace
+                </button>
+            </div>
+            
+            <p class="text-xs text-center text-gray-400 mt-8">Přístup pouze pro autorizovaný personál.</p>
+        </div>
+    </div>
+
+    <!-- Modulový framework (načte se po autentizaci) -->
+    <script>
+        // Placeholder pro init logiku management vrstvy
+        console.log("Management layer initialized. Waiting for auth...");
+    </script>
+</body>
+</html>

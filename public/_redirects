@@ -1,2 +1,2 @@
-# Cloudflare Pages Redirects rule to fallback all URLs to index.html for SPA router
+/admin/* /admin/index.html 200
 /* /index.html 200

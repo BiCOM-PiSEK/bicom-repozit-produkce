@@ -3,7 +3,7 @@
  * GET  /admin/bookings — seznam s filtrací
  * PUT  /admin/bookings — aktualizace (s :id v query)
  */
-import { DataCrypt } from '../../lib/datacrypt.js';
+import { DataCrypt } from '../lib/datacrypt.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });

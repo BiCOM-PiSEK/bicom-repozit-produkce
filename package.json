@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "wrangler pages dev public --local --d1=DB --kv=CACHE --r2=MEDIA",
     "db:init:local": "wrangler d1 execute DB --local --file=db/schema.sql",
-    "db:init:prod": "wrangler d1 execute bicom-db-prod --remote --file=db/schema.sql",
-    "db:migrate": "wrangler d1 migrations apply bicom-db-prod --remote",
+    "db:init:prod": "wrangler d1 execute bicom-pisek-db --remote --file=db/schema.sql",
+    "db:migrate": "wrangler d1 migrations apply bicom-pisek-db --remote",
     "seed": "node scripts/seed-services.js",
     "build": "node scripts/build-sitemap.js",
     "deploy": "wrangler pages deploy public",

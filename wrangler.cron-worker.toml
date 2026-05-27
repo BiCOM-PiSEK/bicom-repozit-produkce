@@ -1,0 +1,38 @@
+name = "bicom-cron-worker"
+main = "functions/api/_cron-worker.js"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bicom-pisek-db"
+database_id = "c04cb289-2ff4-45d7-9fa0-3243c34c3abe"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "bicom-multimedia"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "57e7c49eaba94dd4ad9ede723ff69aab"
+
+[ai]
+binding = "AI"
+
+[[queues.producers]]
+binding = "BOOKING_QUEUE"
+queue = "booking-jobs"
+
+[[queues.producers]]
+binding = "SOCIAL_QUEUE"
+queue = "social-jobs"
+
+[triggers]
+crons = [
+  "0 */1 * * *",   # reminders-dispatch (every hour)
+  "0 3 * * *",     # instagram-sync (daily at 03:00)
+  "30 3 * * *",    # gdpr-anonymize (daily at 03:30)
+  "0 4 * * 1",     # geo-insights (weekly on Mondays at 04:00)
+  "0 2 * * 0",     # d1-backup (weekly on Sundays at 02:00)
+  "0 8 * * *",     # social-publish (daily at 08:00)
+  "0 9 * * 1"      # cashflow-alerts (weekly on Mondays at 09:00)
+]

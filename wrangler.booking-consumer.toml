@@ -1,28 +1,23 @@
-name = "bicom-pisek"
+name = "bicom-booking-consumer"
+main = "functions/api/_queue-booking.js"
 compatibility_date = "2026-01-01"
-pages_build_output_dir = "public"
 
-# --- D1 databáze ---
 [[d1_databases]]
 binding = "DB"
 database_name = "bicom-pisek-db"
 database_id = "c04cb289-2ff4-45d7-9fa0-3243c34c3abe"
 
-# --- R2 úložiště médií ---
 [[r2_buckets]]
 binding = "MEDIA"
 bucket_name = "bicom-multimedia"
 
-# --- KV (cache, rate limit, session) ---
 [[kv_namespaces]]
 binding = "CACHE"
 id = "57e7c49eaba94dd4ad9ede723ff69aab"
 
-# --- Workers AI ---
 [ai]
 binding = "AI"
 
-# --- Queues ---
 [[queues.producers]]
 binding = "BOOKING_QUEUE"
 queue = "booking-jobs"
@@ -31,5 +26,6 @@ queue = "booking-jobs"
 binding = "SOCIAL_QUEUE"
 queue = "social-jobs"
 
-# Secrets se NIKDY nepíší sem. Nastav je: `wrangler secret put NAZEV`
-# Lokálně: soubor .dev.vars (v .gitignore)
+[[queues.consumers]]
+queue = "booking-jobs"
+max_batch_size = 10

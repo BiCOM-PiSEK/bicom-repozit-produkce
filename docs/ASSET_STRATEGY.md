@@ -135,7 +135,7 @@ bicom-multimedia/
 ```
 1. Designér/vlastník vytvoří vizuál
    │
-2. Uloží originál do docs/assets/originals/{kategorie}/
+2. Uloží originál do docs/assets/originals/{kategorie}/ (nebo do Inboxu)
    │
 3. Optimalizace (manuální nebo skript):
    │  - Ořez na správný poměr stran
@@ -148,6 +148,22 @@ bicom-multimedia/
    │
 6. Cloudflare Pages deploy → soubory jsou globálně dostupné
 ```
+
+### 3.1 Rychlý import přes uživatelskou složku (Inbox)
+
+Pro maximální pohodlí je v repozitáři připravena rychlá schránka (inbox):
+`docs/assets/Matěj - dokumenty, soubory a multimédia (ke zpracovani)/`
+
+**Jak tento workflow funguje:**
+1. Vlastník (Matěj) vygeneruje obrázky (např. přes Gemini Omni) a jednoduše je přetáhne do této složky.
+2. AI agent při svém dalším spuštění:
+   - Rozpozná a roztřídí obrázky podle obsahu a názvu.
+   - Provede automatické oříznutí (včetně detekce okrajů u favicon a ikon).
+   - Zkonvertuje soubory do správných formátů (WebP, JPEG pro OG, ICO pro favicon).
+   - Přemístí originály do `docs/assets/originals/` a výrobní verze do `public/assets/img/` a `public/`.
+   - Vše automaticky commitne a připraví pro deploy.
+
+Tento workflow je plně aktivní a ověřený. Jakékoli budoucí obrázky stačí hodit do této složky a požádat agenta o zpracování.
 
 ### Doporučené nástroje pro optimalizaci
 - **[Squoosh](https://squoosh.app/)** — jednorázová konverze v prohlížeči (WebP/AVIF)

@@ -293,4 +293,45 @@
 - [x] Kanonická doména opravena na `bicom-pisek.cz` napříč celým projektem
 - [x] Všechny změny čistě commitnuty a pushnuty na GitHub main větev
 
+---
 
+## 2026-05-31 Asset & Imagery Strategy
+**Model:** Antigravity (Claude)
+**Branch:** agent/ag-w2-05-asset-strategy
+**Status:** ✅ Hotovo
+
+### Co bylo implementováno
+- **Asset Strategy dokument** (`docs/ASSET_STRATEGY.md`) — kompletní 3-vrstvá architektura vizuálních assetů:
+  - Vrstva 1: Originály v `docs/assets/originals/` (zdrojové soubory, plná kvalita)
+  - Vrstva 2: Web verze v `public/assets/img/` (optimalizované WebP/AVIF/SVG)
+  - Vrstva 3: Dynamická média v R2 bucket `bicom-multimedia` (IG sync, blog, zálohy)
+- **Adresářová struktura** s kategorizovanými podsložkami (logo, hero, og, icons, gallery, certificates)
+- **SVG favicon** (`public/icon.svg`) — minimalistické brandové písmeno B (forest green + champagne gold)
+- **Aktualizace AI_AGENT_PROMPT.md** — přidána sekce 3 (Asset & Imagery Strategy pravidla pro agenty)
+- **Aktualizace README.md** — tabulka dokumentace + odkaz na ASSET_STRATEGY
+- **Sada 6 AI generátorových promptů** (favicon, apple-touch-icon, OG karta, hero, galerie) pro vlastníka
+
+### Soubory vytvořené
+- `docs/ASSET_STRATEGY.md` — hlavní strategický dokument
+- `docs/assets/originals/README.md` — popis složky s pravidly
+- `docs/assets/originals/{logo,hero,og,icons,gallery,certificates}/.gitkeep`
+- `public/assets/img/{logo,hero,gallery,certificates}/.gitkeep`
+- `public/icon.svg` — SVG favicon
+
+### Soubory upravené
+- `.github/AI_AGENT_PROMPT.md` — přidána sekce 3 (asset pravidla)
+- `README.md` — přidána tabulka dokumentace, aktualizován AI agent protokol
+
+### Identifikované chybějící soubory (TODO pro vlastníka)
+- `public/favicon.ico` — chybí (deklarován v index.html ř. 28)
+- `public/apple-touch-icon.png` — chybí (deklarován v index.html ř. 30)
+- `public/assets/img/og.jpg` — chybí (deklarován v index.html ř. 17, 25)
+
+### Akceptační kritéria — splněno?
+- [x] ASSET_STRATEGY.md vytvořen s kompletní architekturou
+- [x] Adresářová struktura vytvořena a commitována
+- [x] SVG favicon vytvořen v souladu s brand identity
+- [x] AI_AGENT_PROMPT.md aktualizován o asset pravidla
+- [x] README.md aktualizován s dokumentační tabulkou
+- [x] Prompty pro generování vizuálů připraveny
+- [ ] Chybějící vizuály vygenerovány vlastníkem (čeká se)
